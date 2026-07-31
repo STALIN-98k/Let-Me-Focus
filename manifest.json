@@ -1,0 +1,17 @@
+{
+  "id": "/index.html",
+  "name": "Let Me Focus",
+  "short_name": "Let Me Focus",
+  "description": "An offline-first focus companion: Pomodoro timer, to-do list synced with your calendar, and daily check-ins.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone", "minimal-ui"],
+  "orientation": "portrait",
+  "background_color": "#05070C",
+  "theme_color": "#05070C",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

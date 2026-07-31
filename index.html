@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>Let Me Focus</title>
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" href="icon-192.png" />
+<link rel="apple-touch-icon" href="icon-192.png" />
+<meta name="theme-color" content="#05070C" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --black:#05070C; --indigo:#151038; --indigo2:#241C4E;
+  --blue:#4AC7FF; --purple:#8B7CFF; --white:#F5F6FA;
+  --glass:rgba(255,255,255,0.055); --glass2:rgba(255,255,255,0.09);
+  --border:rgba(255,255,255,0.12); --borderS:rgba(255,255,255,0.22);
+  --text:#F1F2FA; --dim:#A6ACC4; --faint:#6C7290;
+  --green:#52E0A0; --coral:#FF6B5E; --amber:#FFC15E;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;}
+input,textarea{user-select:text;}
+html,body{height:100%;overscroll-behavior:none;}
+body{
+  margin:0;color:var(--text);font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  background:
+    radial-gradient(circle at 20% -5%, #2A2350 0%, transparent 45%),
+    radial-gradient(circle at 90% 10%, #123049 0%, transparent 40%),
+    radial-gradient(circle at 50% 105%, #1B2A4A 0%, transparent 55%),
+    linear-gradient(160deg, var(--black) 0%, var(--indigo) 55%, var(--indigo2) 100%);
+  background-attachment:fixed; min-height:100vh; overflow-x:hidden;
+}
+.blob{position:fixed;border-radius:50%;filter:blur(80px);opacity:.28;z-index:0;pointer-events:none;}
+.blob-1{width:300px;height:300px;background:var(--purple);top:-100px;left:-70px;}
+.blob-2{width:260px;height:260px;background:var(--blue);top:340px;right:-90px;}
+.blob-3{width:240px;height:240px;background:var(--coral);bottom:60px;left:-70px;opacity:.14;}
+
+/* perimeter progress border (pomodoro) */
+#perimeterSvg{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:40;display:none;
+  filter:drop-shadow(0 0 6px rgba(139,124,255,0.55));}
+#perimeterSvg.active{display:block;}
+
+/* splash */
+#splash{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:linear-gradient(160deg,var(--black) 0%,var(--indigo) 60%,var(--indigo2) 100%);transition:opacity .6s ease;gap:22px;}
+#splash.hide{opacity:0;pointer-events:none;}
+.splash-mark{width:76px;height:76px;}
+.splash-mark svg{width:100%;height:100%;}
+.splash-title{font-family:'Sora',sans-serif;font-weight:800;font-size:28px;letter-spacing:.01em;
+  background:linear-gradient(100deg,#fff 20%,var(--blue) 60%,var(--purple) 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;}
+.splash-quote{max-width:280px;text-align:center;font-size:13px;color:var(--dim);line-height:1.6;padding:0 24px;font-style:italic;}
+.splash-credit{position:absolute;top:calc(env(safe-area-inset-top) + 14px);right:16px;font-size:9.5px;letter-spacing:.08em;color:var(--faint);}
+
+/* layout */
+.wrap{position:relative;z-index:1;padding-bottom:90px;display:none;padding-top:env(safe-area-inset-top);}
+.wrap.show{display:block;}
+.header{padding:14px 20px 6px;}
+.eyebrow{font-size:10.5px;letter-spacing:.16em;color:var(--faint);font-weight:600;}
+.h-title{font-family:'Sora',sans-serif;font-weight:800;font-size:24px;margin-top:5px;
+  background:linear-gradient(100deg,#fff 20%,var(--blue) 60%,var(--purple) 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;}
+.h-sub{font-size:12.5px;color:var(--dim);margin-top:4px;}
+.section{padding:0 20px;}
+.section-label{font-size:10.5px;letter-spacing:.12em;color:var(--faint);font-weight:700;margin:18px 0 8px;}
+
+.card{background:var(--glass);border:1px solid var(--border);border-radius:20px;padding:16px 18px;margin-bottom:14px;
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 8px 30px rgba(0,0,0,0.25);}
+.card.glow{border-color:rgba(139,124,255,0.35);box-shadow:0 8px 30px rgba(139,124,255,0.12),0 8px 30px rgba(0,0,0,0.25);}
+.card.clickable{cursor:pointer;transition:transform .15s ease;}
+.card.clickable:active{transform:scale(0.98);}
+
+.stat-row{display:flex;gap:12px;}
+.stat-card{flex:1;background:var(--glass);border:1px solid var(--border);border-radius:16px;padding:14px;text-align:center;backdrop-filter:blur(16px);}
+.stat-num{font-family:'Sora',sans-serif;font-weight:800;font-size:22px;}
+.stat-label{font-size:10px;color:var(--faint);margin-top:3px;letter-spacing:.03em;}
+
+.ring{position:relative;flex-shrink:0;}
+.ring svg{transform:rotate(-90deg);}
+.ring-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;}
+.ring-num{font-family:'Sora',sans-serif;font-weight:800;font-size:18px;}
+.ring-sub{font-size:8.5px;color:var(--faint);}
+
+.mission-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
+.mission-item:last-child{border-bottom:none;}
+.check{width:22px;height:22px;border-radius:7px;border:1.5px solid var(--borderS);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.check.done{background:linear-gradient(100deg,var(--blue),var(--purple));border-color:transparent;}
+.mission-text{flex:1;font-size:13px;}
+.mission-text .m-title{font-weight:600;}
+.mission-text .m-sub{font-size:10.5px;color:var(--faint);margin-top:1px;}
+.tag{font-size:9px;font-weight:700;letter-spacing:.04em;padding:3px 8px;border-radius:999px;text-transform:uppercase;flex-shrink:0;}
+.tag.todo{color:#0B1220;background:linear-gradient(100deg,var(--blue),#8fd9ff);}
+.tag.exam{color:#2A0F0B;background:linear-gradient(100deg,var(--coral),var(--amber));}
+.tag.custom{color:#1a1a0b;background:linear-gradient(100deg,var(--amber),#ffe29b);}
+.tag.overdue{color:#2A0F0B;background:var(--coral);}
+
+.badge{display:inline-block;font-size:10.5px;font-weight:700;padding:5px 11px;border-radius:999px;border:1px solid var(--borderS);}
+.badge.ahead{color:var(--green);background:rgba(82,224,160,0.12);}
+.badge.behind{color:var(--coral);background:rgba(255,107,94,0.12);}
+.badge.ontrack{color:var(--blue);background:rgba(74,199,255,0.12);}
+
+button.btn{font-family:inherit;font-size:12px;font-weight:600;padding:8px 14px;border-radius:10px;border:1px solid var(--borderS);
+  background:rgba(255,255,255,0.04);color:var(--dim);cursor:pointer;transition:all .15s;}
+button.btn:hover{background:rgba(255,255,255,0.09);color:var(--text);}
+button.btn.on{background:linear-gradient(100deg,var(--blue),var(--purple));border-color:transparent;color:#0B1220;}
+button.btn.danger{border-color:rgba(255,107,94,0.4);color:var(--coral);}
+button.btn.block{width:100%;padding:13px;}
+button.btn:disabled{opacity:.5;}
+
+input,select,textarea{width:100%;padding:10px 12px;margin-bottom:9px;border-radius:10px;border:1px solid var(--border);
+  font-size:13px;font-family:inherit;background:rgba(0,0,0,0.2);color:var(--text);}
+input::placeholder,textarea::placeholder{color:var(--faint);}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue);}
+label.field-label{font-size:11px;color:var(--faint);font-weight:600;letter-spacing:.03em;margin:2px 0 4px;display:block;}
+
+.chip-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+.chip{font-size:11.5px;font-weight:600;padding:7px 12px;border-radius:999px;border:1px solid var(--border);
+  background:var(--glass);color:var(--dim);cursor:pointer;transition:all .15s;}
+.chip.active{border-color:transparent;color:#0B1220;font-weight:700;background:linear-gradient(100deg,var(--blue),var(--purple));}
+.weekday-chip{width:40px;height:40px;border-radius:12px;border:1px solid var(--border);background:var(--glass);
+  color:var(--dim);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.weekday-chip.active{border-color:transparent;background:linear-gradient(100deg,var(--blue),var(--purple));color:#0B1220;}
+.weekday-grid{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+
+/* onboarding */
+#onboarding{position:fixed;inset:0;z-index:50;background:linear-gradient(160deg,var(--black) 0%,var(--indigo) 55%,var(--indigo2) 100%);
+  display:none;flex-direction:column;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);overflow-y:auto;}
+#onboarding.show{display:flex;}
+.ob-body{flex:1;padding:24px 22px;}
+.ob-dots{display:flex;gap:6px;justify-content:center;padding:14px 0 0;}
+.ob-dot{width:7px;height:7px;border-radius:50%;background:var(--border);}
+.ob-dot.active{background:linear-gradient(100deg,var(--blue),var(--purple));width:20px;border-radius:4px;}
+.ob-title{font-family:'Sora',sans-serif;font-weight:800;font-size:22px;margin-bottom:6px;}
+.ob-sub{font-size:12.5px;color:var(--dim);margin-bottom:20px;line-height:1.5;}
+.ob-nav{display:flex;gap:10px;padding:14px 22px;}
+.ob-nav button{flex:1;}
+
+/* pomodoro widget */
+.pomo-display{text-align:center;padding:14px 0 6px;}
+.pomo-mode{font-size:11px;letter-spacing:.14em;color:var(--faint);font-weight:700;text-transform:uppercase;}
+.pomo-time{font-family:'Sora',sans-serif;font-weight:800;font-size:46px;margin:6px 0;
+  background:linear-gradient(100deg,#fff 20%,var(--blue) 60%,var(--purple) 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;}
+.pomo-controls{display:flex;gap:8px;justify-content:center;margin-top:8px;}
+.pomo-controls button{flex:0 0 auto;padding:10px 20px;}
+.pomo-stats{display:flex;justify-content:center;gap:20px;margin-top:12px;font-size:11px;color:var(--faint);}
+
+/* tab bar */
+.tabbar{position:fixed;bottom:0;left:0;right:0;z-index:10;display:flex;background:rgba(5,7,12,0.75);
+  backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border-top:1px solid var(--border);
+  padding:8px 4px calc(8px + env(safe-area-inset-bottom));}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;
+  color:var(--faint);font-size:9.5px;font-weight:600;padding:5px 2px;border-radius:12px;cursor:pointer;}
+.tab svg{width:19px;height:19px;}
+.tab.active{color:var(--text);}
+.tab.active svg{color:var(--blue);}
+
+.empty{font-size:13px;color:var(--dim);padding:24px 4px;text-align:center;}
+.footer-copy{text-align:center;font-size:10.5px;color:var(--faint);margin-top:22px;padding:0 20px 4px;letter-spacing:.04em;}
+
+/* calendar */
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.cal-nav button{background:var(--glass);border:1px solid var(--border);border-radius:10px;width:34px;height:34px;color:var(--text);cursor:pointer;}
+.cal-title{font-family:'Sora',sans-serif;font-weight:700;font-size:15px;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+.cal-dow{text-align:center;font-size:9.5px;color:var(--faint);font-weight:700;padding:4px 0;}
+.cal-cell{aspect-ratio:1;border-radius:10px;background:var(--glass);border:1px solid var(--border);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;font-size:11px;cursor:pointer;position:relative;}
+.cal-cell.today{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue),0 0 14px rgba(74,199,255,0.4);}
+.cal-cell.selected{background:linear-gradient(100deg,rgba(74,199,255,0.25),rgba(139,124,255,0.25));}
+.cal-cell.empty{background:none;border:none;cursor:default;}
+.cal-dots{display:flex;gap:2px;margin-top:2px;}
+.cal-dot{width:4px;height:4px;border-radius:50%;}
+.year-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.year-month{background:var(--glass);border:1px solid var(--border);border-radius:14px;padding:10px;text-align:center;cursor:pointer;}
+.year-month-name{font-size:11.5px;font-weight:700;font-family:'Sora',sans-serif;}
+.year-month-count{font-size:9.5px;color:var(--faint);margin-top:2px;}
+
+.fab{position:fixed;bottom:96px;right:20px;z-index:9;width:54px;height:54px;border-radius:50%;
+  background:linear-gradient(100deg,var(--blue),var(--purple));border:none;box-shadow:0 8px 24px rgba(139,124,255,0.4);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;color:#0B1220;}
+.fab svg{width:24px;height:24px;}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:60;display:none;align-items:flex-end;backdrop-filter:blur(4px);}
+.modal-overlay.show{display:flex;}
+.modal-sheet{background:var(--indigo);border:1px solid var(--border);border-top-left-radius:24px;border-top-right-radius:24px;
+  padding:18px 20px calc(20px + env(safe-area-inset-bottom));width:100%;max-height:82vh;overflow-y:auto;}
+.modal-title{font-family:'Sora',sans-serif;font-weight:700;font-size:16px;margin-bottom:12px;}
+.close-x{float:right;background:none;border:none;color:var(--faint);font-size:18px;cursor:pointer;}
+</style>
+</head>
+<body>
+
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+<div class="blob blob-3"></div>
+
+<svg id="perimeterSvg"><rect id="perimeterRect" x="1.2%" y="1.2%" width="97.6%" height="97.6%" rx="26" ry="26"
+  fill="none" stroke="url(#permGrad)" stroke-width="5" pathLength="1000" stroke-dasharray="1000" stroke-dashoffset="1000" stroke-linecap="round"/>
+  <defs><linearGradient id="permGrad" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#4AC7FF"/><stop offset="1" stop-color="#8B7CFF"/>
+  </linearGradient></defs>
+</svg>
+
+<div id="splash">
+  <div class="splash-credit">© STALIN IRENGBAM</div>
+  <div class="splash-mark"><svg viewBox="0 0 100 100">
+    <circle cx="50" cy="50" r="30" fill="none" stroke="url(#g1)" stroke-width="7" stroke-dasharray="150 220" stroke-linecap="round" transform="rotate(-40 50 50)"/>
+    <circle cx="50" cy="50" r="18" fill="none" stroke="url(#g1)" stroke-width="7" stroke-dasharray="90 130" stroke-linecap="round" transform="rotate(-40 50 50)"/>
+    <circle cx="50" cy="50" r="5" fill="#F5F6FA"/>
+    <defs><linearGradient id="g1" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#4AC7FF"/><stop offset="1" stop-color="#8B7CFF"/></linearGradient></defs>
+  </svg></div>
+  <div class="splash-title">LET ME FOCUS</div>
+  <div class="splash-quote" id="splashQuote"></div>
+</div>
+
+<div id="onboarding"></div>
+
+<div class="wrap" id="wrap">
+  <div class="header">
+    <div class="eyebrow" id="eyebrow">LET ME FOCUS</div>
+    <div class="h-title" id="pageTitle">Home</div>
+    <div class="h-sub" id="pageSub"></div>
+  </div>
+  <div class="section" id="content"></div>
+</div>
+
+<button class="fab" id="fab" style="display:none;">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+</button>
+
+<div class="tabbar" id="tabbar"></div>
+<div class="modal-overlay" id="modalOverlay"><div class="modal-sheet" id="modalSheet"></div></div>
+
+<script>
+/* ================= CONSTANTS ================= */
+
+const QUOTES = [
+  "Discipline is choosing between what you want now and what you want most.",
+  "Small steps, repeated daily, outrun brilliance that never shows up.",
+  "Focus is a muscle. Today is a rep.",
+  "Mastery is just revision that refused to stop.",
+  "You don't rise to the goal. You rise to the level of your preparation.",
+  "One finished task quiets more noise than ten planned ones.",
+  "Consistency is a quiet kind of courage.",
+  "Progress hides in the sessions you almost skipped.",
+  "The plan adjusts. Your commitment shouldn't have to.",
+  "One page today is worth more than ten pages of guilt tomorrow."
+];
+
+const WEEKDAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+const NAV_ICONS = {
+  home: '<path d="M4 21V9l8-5 8 5v12"/><path d="M9 21v-6h6v6"/>',
+  calendar: '<rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/>',
+  todo: '<path d="M9 11l2 2 4-4"/><rect x="3" y="4" width="18" height="17" rx="2"/>',
+  checkin: '<path d="M12 22s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11z"/><circle cx="12" cy="11" r="2.5"/>',
+  settings: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/>'
+};
+
+/* ================= STATE ================= */
+
+var db = {
+  profile: JSON.parse(localStorage.getItem("lmf-profile") || "null"),
+  todos: JSON.parse(localStorage.getItem("lmf-todos") || "[]"),
+  events: JSON.parse(localStorage.getItem("lmf-events") || "[]"),
+  history: JSON.parse(localStorage.getItem("lmf-history") || "{}"),
+  streak: JSON.parse(localStorage.getItem("lmf-streak") || '{"count":0,"lastDate":null}'),
+  pomodoro: JSON.parse(localStorage.getItem("lmf-pomodoro") || '{"focusMin":25,"breakMin":5,"longBreakMin":15,"sessionsBeforeLong":4,"sessionLog":[],"state":null}')
+};
+
+var ui = {
+  tab: "home",
+  onboardStep: 0,
+  calView: "month",
+  calDate: new Date(),
+  calSelected: dateKey(new Date()),
+  obData: { name:"", examName:"", examDate:"", hours:2, days:[1,2,3,4,5] }
+};
+
+function save(){
+  localStorage.setItem("lmf-profile", JSON.stringify(db.profile));
+  localStorage.setItem("lmf-todos", JSON.stringify(db.todos));
+  localStorage.setItem("lmf-events", JSON.stringify(db.events));
+  localStorage.setItem("lmf-history", JSON.stringify(db.history));
+  localStorage.setItem("lmf-streak", JSON.stringify(db.streak));
+  localStorage.setItem("lmf-pomodoro", JSON.stringify(db.pomodoro));
+}
+
+function dateKey(d){ const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),day=String(d.getDate()).padStart(2,"0"); return `${y}-${m}-${day}`; }
+function keyToDate(k){ const [y,m,d]=k.split("-").map(Number); return new Date(y,m-1,d); }
+function addDays(d,n){ const r=new Date(d); r.setDate(r.getDate()+n); return r; }
+function daysBetween(a,b){ return Math.round((b-a)/86400000); }
+function uid(){ return Math.random().toString(36).slice(2,9); }
+
+/* ================= TODOS ================= */
+
+function todosForDate(dKey){
+  return db.todos.filter(t=>{
+    if(t.dueDate===dKey) return true;
+    if(t.recurrence==="weekly") return keyToDate(dKey).getDay()===keyToDate(t.dueDate).getDay() && dKey>=t.dueDate;
+    if(t.recurrence==="yearly"){ const [,m,d]=t.dueDate.split("-"); const [,km,kd]=dKey.split("-"); return m===km&&d===kd; }
+    return false;
+  });
+}
+
+function overdueTodos(){
+  const today=dateKey(new Date());
+  return db.todos.filter(t=>!t.done && t.recurrence==="none" && t.dueDate<today);
+}
+
+function todaysTodos(){
+  const today=dateKey(new Date());
+  const due=todosForDate(today);
+  const overdue=overdueTodos();
+  const merged=[...overdue.map(t=>({...t,_overdue:true})), ...due.filter(t=>!overdue.some(o=>o.id===t.id))];
+  return merged;
+}
+
+function totalTodosCount(){ return db.todos.length; }
+function doneTodosCount(){ return db.todos.filter(t=>t.done).length; }
+function completionPct(){ const tot=totalTodosCount(); return tot? Math.round(doneTodosCount()/tot*100):0; }
+
+function toggleTodo(id){
+  const t=db.todos.find(x=>x.id===id); if(!t) return;
+  t.done=!t.done;
+  const today=dateKey(new Date());
+  if(t.done){ t.doneDate=today; db.history[today]=(db.history[today]||0)+1; updateStreak(); }
+  save(); renderApp();
+}
+
+function predictedCompletionDate(){
+  const tot=totalTodosCount(); const done=doneTodosCount();
+  if(tot===0 || done===0) return db.profile? keyToDate(db.profile.examDate): null;
+  const historyDates=Object.keys(db.history).sort();
+  if(!historyDates.length) return db.profile? keyToDate(db.profile.examDate): null;
+  const first=keyToDate(historyDates[0]);
+  const elapsed=Math.max(1,daysBetween(first,new Date()));
+  const pace=done/elapsed;
+  if(pace<=0) return null;
+  const remaining=Math.max(0,tot-done);
+  const daysNeeded=Math.ceil(remaining/pace);
+  return addDays(new Date(), daysNeeded);
+}
+
+function paceStatus(){
+  const pred=predictedCompletionDate();
+  if(!pred || !db.profile) return "ontrack";
+  const exam=keyToDate(db.profile.examDate);
+  const diff=daysBetween(exam,pred);
+  if(diff<=-2) return "ahead";
+  if(diff>=2) return "behind";
+  return "ontrack";
+}
+
+function updateStreak(){
+  const today=dateKey(new Date());
+  if(db.streak.lastDate===today) return;
+  const yest=dateKey(addDays(new Date(),-1));
+  if(db.streak.lastDate===yest) db.streak.count++;
+  else db.streak.count=1;
+  db.streak.lastDate=today;
+  save();
+}
+
+function weekTodosDoneCount(){
+  let n=0; const today=new Date();
+  for(let i=0;i<7;i++){ const k=dateKey(addDays(today,-i)); n+=db.history[k]||0; }
+  return n;
+}
+
+function motivationalMessage(){
+  const name=db.profile?.name?.split(" ")[0]||"there";
+  const status=paceStatus();
+  const daysLeft = db.profile? daysBetween(new Date(), keyToDate(db.profile.examDate)) : null;
+  const todayList=todaysTodos();
+  const anyOverdue = todayList.some(t=>t._overdue);
+  if(daysLeft!==null && daysLeft<=7 && daysLeft>=0) return `${daysLeft} days left, ${name}. Keep today's list tight and finish it.`;
+  if(anyOverdue) return `A few things slipped, ${name} — clear them first and the day gets lighter.`;
+  if(status==="ahead") return `You're ahead of pace, ${name}. Use the slack to go deeper, not longer.`;
+  if(status==="behind") return `The pace has slipped a little, ${name}. Today is a good day to close the gap.`;
+  return QUOTES[new Date().getDate() % QUOTES.length];
+}
+
+/* ================= CALENDAR EVENTS ================= */
+
+function eventsForDate(dKey){
+  const todos=todosForDate(dKey).map(t=>({...t,type:"todo",title:t.title}));
+  const custom=db.events.filter(e=>{
+    if(e.date===dKey) return true;
+    if(e.recurrence==="yearly"){ const [,m,d]=e.date.split("-"); const [,km,kd]=dKey.split("-"); return m===km&&d===kd; }
+    if(e.recurrence==="weekly"){ return keyToDate(dKey).getDay()===keyToDate(e.date).getDay() && dKey>=e.date; }
+    return false;
+  }).map(e=>({...e,title:e.title}));
+  return [...todos, ...custom];
+}
+
+function dotColor(t){ return t==="todo"?"#4AC7FF":t==="exam"?"#FF6B5E":"#FFC15E"; }
+
+/* ================= POMODORO ================= */
+
+function durationMsFor(mode){
+  const p=db.pomodoro;
+  const min = mode==="focus"?p.focusMin: mode==="longbreak"?p.longBreakMin:p.breakMin;
+  return min*60*1000;
+}
+
+function startPomodoro(mode){
+  mode = mode || (db.pomodoro.state?.mode) || "focus";
+  db.pomodoro.state = {mode, endTime: Date.now()+durationMsFor(mode), durationMs: durationMsFor(mode), running:true};
+  save();
+}
+function pausePomodoro(){
+  const s=db.pomodoro.state; if(!s || !s.running) return;
+  s.running=false; s.remainingMs = s.endTime-Date.now();
+  save();
+}
+function resumePomodoro(){
+  const s=db.pomodoro.state; if(!s || s.running) return;
+  s.endTime = Date.now()+ (s.remainingMs!=null? s.remainingMs : s.durationMs);
+  s.running=true; delete s.remainingMs;
+  save();
+}
+function resetPomodoro(){
+  db.pomodoro.state=null; save();
+}
+function skipPomodoro(){
+  completePomodoroPhase();
+}
+
+function completePomodoroPhase(){
+  const s=db.pomodoro.state; if(!s) return;
+  const p=db.pomodoro;
+  if(s.mode==="focus"){
+    p.sessionLog.push(new Date().toISOString());
+    const today=dateKey(new Date());
+    db.history[today]=(db.history[today]||0)+0; // focus sessions don't inflate todo pace; tracked separately
+    updateStreak();
+  }
+  const sessionsToday = p.sessionLog.filter(t=>dateKey(new Date(t))===dateKey(new Date())).length;
+  let nextMode;
+  if(s.mode==="focus") nextMode = (sessionsToday % p.sessionsBeforeLong===0) ? "longbreak" : "break";
+  else nextMode = "focus";
+  db.pomodoro.state = {mode: nextMode, endTime: Date.now()+durationMsFor(nextMode), durationMs: durationMsFor(nextMode), running:true};
+  save();
+}
+
+function pomodoroTick(){
+  const s=db.pomodoro.state;
+  const svg=document.getElementById("perimeterSvg");
+  const rect=document.getElementById("perimeterRect");
+  if(!s){ svg.classList.remove("active"); return; }
+  svg.classList.add("active");
+  rect.setAttribute("stroke", s.mode==="focus" ? "url(#permGrad)" : "#52E0A0");
+  let remaining;
+  if(s.running){
+    remaining = s.endTime-Date.now();
+    if(remaining<=0){ completePomodoroPhase(); if(ui.tab==="home") renderContent(); return; }
+  } else {
+    remaining = s.remainingMs!=null? s.remainingMs : s.durationMs;
+  }
+  const progress = 1 - Math.max(0,remaining)/s.durationMs;
+  rect.setAttribute("stroke-dashoffset", String(1000*(1-progress)));
+  if(ui.tab==="home") updatePomodoroWidgetDOM(remaining, s);
+}
+
+function fmtTime(ms){
+  const total=Math.max(0,Math.ceil(ms/1000));
+  const m=Math.floor(total/60), s=total%60;
+  return `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+}
+
+function sessionsTodayCount(){ return db.pomodoro.sessionLog.filter(t=>dateKey(new Date(t))===dateKey(new Date())).length; }
+
+function updatePomodoroWidgetDOM(remaining, state){
+  const timeEl=document.getElementById("pomoTimeDisplay");
+  const modeEl=document.getElementById("pomoModeDisplay");
+  if(timeEl) timeEl.textContent = fmtTime(remaining);
+  if(modeEl) modeEl.textContent = state.mode==="focus"?"Focus":state.mode==="longbreak"?"Long Break":"Break";
+}
+
+/* ================= RENDER: SPLASH / ONBOARDING ================= */
+
+function initSplash(){
+  document.getElementById("splashQuote").textContent = QUOTES[Math.floor(Math.random()*QUOTES.length)];
+  setTimeout(()=>{
+    document.getElementById("splash").classList.add("hide");
+    setTimeout(()=>{
+      document.getElementById("splash").style.display="none";
+      if(!db.profile){ startOnboarding(); } else { document.getElementById("wrap").classList.add("show"); renderApp(); }
+    },600);
+  },2200);
+}
+
+function startOnboarding(){
+  document.getElementById("onboarding").classList.add("show");
+  ui.onboardStep=0;
+  renderOnboarding();
+}
+
+function renderOnboarding(){
+  const steps=["name","goal","hours","review"];
+  const step=steps[ui.onboardStep];
+  const el=document.getElementById("onboarding");
+  let body="";
+
+  if(step==="name"){
+    body=`<div class="ob-title">Welcome. What should we call you?</div>
+    <div class="ob-sub">Let Me Focus adapts around your pace — let's start with your name.</div>
+    <input id="obName" placeholder="Your name" value="${ui.obData.name}" />`;
+  } else if(step==="goal"){
+    body=`<div class="ob-title">What are you working toward?</div>
+    <div class="ob-sub">This drives your countdown on the home screen.</div>
+    <label class="field-label">Goal / exam name</label>
+    <input id="obExam" placeholder="e.g. Board Exams, Launch Day" value="${ui.obData.examName}" />
+    <label class="field-label">Target date</label>
+    <input id="obExamDate" type="date" value="${ui.obData.examDate}" />`;
+  } else if(step==="hours"){
+    body=`<div class="ob-title">Your rhythm</div>
+    <div class="ob-sub">We'll use this to gently pace your days.</div>
+    <label class="field-label">Focus hours per day</label>
+    <input id="obHours" type="number" min="0.5" step="0.5" value="${ui.obData.hours}" />
+    <label class="field-label">Which days do you work?</label>
+    <div class="weekday-grid" id="obDays">${WEEKDAYS.map((w,i)=>`<div class="weekday-chip ${ui.obData.days.includes(i)?"active":""}" data-day="${i}">${w}</div>`).join("")}</div>`;
+  } else if(step==="review"){
+    body=`<div class="ob-title">Ready, ${ui.obData.name||"friend"}.</div>
+    <div class="ob-sub">${ui.obData.examName||"Your goal"} · ${ui.obData.examDate||"date not set"} · ${ui.obData.hours}h/day.</div>
+    <div class="card">Add your first to-dos any time from the To Do tab — they'll automatically show up on your Calendar too. Let's go.</div>`;
+  }
+
+  el.innerHTML = `<div class="ob-body">${body}</div>
+    <div class="ob-dots">${steps.map((s,i)=>`<div class="ob-dot ${i===ui.onboardStep?"active":""}"></div>`).join("")}</div>
+    <div class="ob-nav">
+      ${ui.onboardStep>0?'<button class="btn" id="obBack">Back</button>':'<div style="flex:1;"></div>'}
+      <button class="btn on" id="obNext">${step==="review"?"Enter Let Me Focus":"Continue"}</button>
+    </div>`;
+
+  if(step==="hours"){
+    el.querySelectorAll(".weekday-chip").forEach(c=>c.onclick=()=>{
+      const d=+c.dataset.day;
+      const idx=ui.obData.days.indexOf(d);
+      if(idx>-1) ui.obData.days.splice(idx,1); else ui.obData.days.push(d);
+      renderOnboarding();
+    });
+  }
+
+  document.getElementById("obNext").onclick=()=>{
+    if(step==="name"){ ui.obData.name=document.getElementById("obName").value.trim()||"Friend"; }
+    if(step==="goal"){
+      ui.obData.examName=document.getElementById("obExam").value.trim()||"Your goal";
+      ui.obData.examDate=document.getElementById("obExamDate").value;
+      if(!ui.obData.examDate){ alert("Please set a target date."); return; }
+    }
+    if(step==="hours"){ ui.obData.hours=parseFloat(document.getElementById("obHours").value)||2; }
+    if(step==="review"){
+      db.profile={name:ui.obData.name, examName:ui.obData.examName, examDate:ui.obData.examDate, hours:ui.obData.hours, days:ui.obData.days};
+      save();
+      document.getElementById("onboarding").classList.remove("show");
+      document.getElementById("wrap").classList.add("show");
+      renderApp();
+      return;
+    }
+    ui.onboardStep++;
+    renderOnboarding();
+  };
+  const backBtn=document.getElementById("obBack");
+  if(backBtn) backBtn.onclick=()=>{ ui.onboardStep--; renderOnboarding(); };
+}
+
+/* ================= RENDER: APP SHELL ================= */
+
+function renderApp(){
+  renderTabbar();
+  renderTop();
+  renderContent();
+  document.getElementById("fab").style.display = (ui.tab==="calendar"||ui.tab==="todo") ? "flex" : "none";
+}
+
+function renderTop(){
+  const titles={home:["Home",""], calendar:["Calendar",""], todo:["To Do",""], checkin:["Check In",""], settings:["Settings",""]};
+  const hr=new Date().getHours();
+  const greet = hr<12?"Good morning":hr<17?"Good afternoon":"Good evening";
+  if(ui.tab==="home"){
+    document.getElementById("pageTitle").textContent = `${greet}, ${db.profile.name.split(" ")[0]}`;
+    document.getElementById("pageSub").textContent = motivationalMessage();
+  } else {
+    document.getElementById("pageTitle").textContent = titles[ui.tab][0];
+    document.getElementById("pageSub").textContent = titles[ui.tab][1];
+  }
+}
+
+function renderTabbar(){
+  const tabs=[["home","Home"],["calendar","Calendar"],["todo","To Do"],["checkin","Check In"],["settings","Settings"]];
+  document.getElementById("tabbar").innerHTML = tabs.map(([k,l])=>`
+    <button class="tab ${ui.tab===k?"active":""}" data-tab="${k}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${NAV_ICONS[k]}</svg>
+      ${l}
+    </button>`).join("");
+  document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{ ui.tab=b.dataset.tab; renderApp(); });
+}
+
+function renderContent(){
+  const el=document.getElementById("content");
+  if(ui.tab==="home") el.innerHTML=renderHome();
+  else if(ui.tab==="calendar") el.innerHTML=renderCalendar();
+  else if(ui.tab==="todo") el.innerHTML=renderTodo();
+  else if(ui.tab==="checkin") el.innerHTML=renderCheckin();
+  else if(ui.tab==="settings") el.innerHTML=renderSettings();
+  bindContentEvents();
+  if(ui.tab==="home") pomodoroTick();
+}
+
+/* ================= HOME ================= */
+
+function ringSVG(pct,size,color1,color2,label,sub){
+  const r=(size-10)/2, c=2*Math.PI*r, off=c*(1-pct/100);
+  return `<div class="ring" style="width:${size}px;height:${size}px;">
+    <svg width="${size}" height="${size}">
+      <circle cx="${size/2}" cy="${size/2}" r="${r}" stroke="rgba(255,255,255,0.08)" stroke-width="8" fill="none"/>
+      <circle cx="${size/2}" cy="${size/2}" r="${r}" stroke="url(#rg-${label})" stroke-width="8" fill="none"
+        stroke-dasharray="${c}" stroke-dashoffset="${off}" stroke-linecap="round"/>
+      <defs><linearGradient id="rg-${label}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${color1}"/><stop offset="1" stop-color="${color2}"/></linearGradient></defs>
+    </svg>
+    <div class="ring-label"><div class="ring-num">${pct}%</div><div class="ring-sub">${sub}</div></div>
+  </div>`;
+}
+
+function renderHome(){
+  const daysLeft = daysBetween(new Date(), keyToDate(db.profile.examDate));
+  const todayList = todaysTodos();
+  const todayDone = todayList.filter(t=>t.done).length;
+  const todayPct = todayList.length? Math.round(todayDone/todayList.length*100):0;
+  const s=db.pomodoro.state;
+  const modeLabel = s? (s.mode==="focus"?"Focus":s.mode==="longbreak"?"Long Break":"Break") : "Focus";
+  const remaining = s? (s.running? s.endTime-Date.now() : (s.remainingMs!=null?s.remainingMs:s.durationMs)) : durationMsFor("focus");
+
+  return `
+    <div class="stat-row" style="margin-bottom:14px;">
+      <div class="stat-card"><div class="stat-num">${daysLeft>=0?daysLeft:0}</div><div class="stat-label">DAYS TO ${db.profile.examName.toUpperCase()}</div></div>
+      <div class="stat-card"><div class="stat-num">🔥 ${db.streak.count}</div><div class="stat-label">DAY STREAK</div></div>
+    </div>
+
+    <div class="section-label">POMODORO</div>
+    <div class="card glow">
+      <div class="pomo-display">
+        <div class="pomo-mode" id="pomoModeDisplay">${modeLabel}</div>
+        <div class="pomo-time" id="pomoTimeDisplay">${fmtTime(remaining)}</div>
+        <div class="pomo-controls">
+          ${!s || !s.running ? `<button class="btn on" id="pomoStart">${s?"Resume":"Start"}</button>` : `<button class="btn" id="pomoPause">Pause</button>`}
+          <button class="btn" id="pomoSkip">Skip</button>
+          <button class="btn" id="pomoReset">Reset</button>
+        </div>
+        <div class="pomo-stats"><span>${sessionsTodayCount()} sessions today</span><span>${db.pomodoro.sessionLog.length} all time</span></div>
+      </div>
+    </div>
+
+    <div class="section-label">TODAY'S MISSION — ${todayPct}% DONE</div>
+    <div class="card">
+      ${todayList.length? todayList.map(t=>`
+        <div class="mission-item">
+          <div class="check ${t.done?"done":""}" data-todoid="${t.id}"></div>
+          <div class="mission-text"><div class="m-title">${t.title}</div>${t._overdue?'<div class="m-sub">Overdue</div>':""}</div>
+          <span class="tag ${t._overdue?"overdue":"todo"}">${t._overdue?"overdue":"todo"}</span>
+        </div>`).join("") : '<div class="empty">Nothing due today — add tasks from the To Do tab.</div>'}
+    </div>
+
+    <div class="card clickable glow" id="checkinCard" style="display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:14.5px;">Daily Check In</div>
+        <div style="font-size:11px;color:var(--dim);margin-top:2px;">See your overall progress &amp; pace</div>
+      </div>
+      <div style="font-size:20px;">→</div>
+    </div>
+
+    <div class="footer-copy">© 2026 Stalin Irengbam — All rights reserved.</div>
+  `;
+}
+
+/* ================= CALENDAR ================= */
+
+function renderCalendar(){
+  const viewChips=["day","week","month","year"].map(v=>`<div class="chip ${ui.calView===v?"active":""}" data-calview="${v}">${v[0].toUpperCase()+v.slice(1)}</div>`).join("");
+  let body="";
+  if(ui.calView==="month") body=renderMonthView();
+  else if(ui.calView==="day") body=renderDayView();
+  else if(ui.calView==="week") body=renderWeekView();
+  else if(ui.calView==="year") body=renderYearView();
+  return `<div class="chip-row">${viewChips}</div>${body}`;
+}
+
+function renderMonthView(){
+  const d=ui.calDate; const y=d.getFullYear(), m=d.getMonth();
+  const first=new Date(y,m,1); const startDow=first.getDay();
+  const daysInMonth=new Date(y,m+1,0).getDate();
+  let cells="";
+  for(let i=0;i<startDow;i++) cells+=`<div class="cal-cell empty"></div>`;
+  for(let day=1;day<=daysInMonth;day++){
+    const dt=new Date(y,m,day); const k=dateKey(dt);
+    const evs=eventsForDate(k);
+    const isToday = k===dateKey(new Date());
+    const isSel = k===ui.calSelected;
+    const dots=[...new Set(evs.map(e=>e.type))].slice(0,4).map(t=>`<div class="cal-dot" style="background:${dotColor(t)}"></div>`).join("");
+    cells+=`<div class="cal-cell ${isToday?"today":""} ${isSel?"selected":""}" data-day="${k}">${day}<div class="cal-dots">${dots}</div></div>`;
+  }
+  const selEvs=eventsForDate(ui.calSelected);
+  return `
+    <div class="cal-nav">
+      <button data-navmonth="-1">‹</button>
+      <div class="cal-title">${MONTHS[m]} ${y}</div>
+      <button data-navmonth="1">›</button>
+    </div>
+    <div class="cal-grid">${WEEKDAYS.map(w=>`<div class="cal-dow">${w}</div>`).join("")}${cells}</div>
+    <div class="section-label">${keyToDate(ui.calSelected).toDateString()}</div>
+    <div class="card">${renderDayList(selEvs)}</div>`;
+}
+
+function renderDayList(evs){
+  if(!evs.length) return '<div class="empty">Nothing scheduled — tap + to add.</div>';
+  return evs.map(s=>`
+    <div class="mission-item">
+      ${s.type==="todo"?`<div class="check ${s.done?"done":""}" data-todoid="${s.id}"></div>`:'<div style="width:22px;"></div>'}
+      <div class="mission-text"><div class="m-title">${s.title}</div></div>
+      <span class="tag ${s.type}">${s.type}</span>
+    </div>`).join("");
+}
+
+function renderDayView(){
+  const k=ui.calSelected;
+  return `<div class="cal-nav">
+      <button data-navday="-1">‹</button>
+      <div class="cal-title">${keyToDate(k).toDateString()}</div>
+      <button data-navday="1">›</button>
+    </div>
+    <div class="card">${renderDayList(eventsForDate(k))}</div>`;
+}
+
+function renderWeekView(){
+  const start=keyToDate(ui.calSelected);
+  const monday=addDays(start, -((start.getDay()+6)%7));
+  let out="";
+  for(let i=0;i<7;i++){
+    const dt=addDays(monday,i); const k=dateKey(dt); const evs=eventsForDate(k);
+    out+=`<div class="section-label">${WEEKDAYS[dt.getDay()]} ${dt.getDate()} ${MONTHS[dt.getMonth()].slice(0,3)}</div><div class="card">${renderDayList(evs)}</div>`;
+  }
+  return `<div class="cal-nav">
+      <button data-navweek="-1">‹</button>
+      <div class="cal-title">Week of ${monday.toDateString()}</div>
+      <button data-navweek="1">›</button>
+    </div>` + out;
+}
+
+function renderYearView(){
+  const y=ui.calDate.getFullYear();
+  let months="";
+  for(let m=0;m<12;m++){
+    let count=0;
+    const daysInMonth=new Date(y,m+1,0).getDate();
+    for(let day=1;day<=daysInMonth;day++) count+=eventsForDate(dateKey(new Date(y,m,day))).length;
+    months+=`<div class="year-month" data-yearmonth="${m}"><div class="year-month-name">${MONTHS[m].slice(0,3)}</div><div class="year-month-count">${count} items</div></div>`;
+  }
+  return `<div class="cal-nav">
+      <button data-navyear="-1">‹</button>
+      <div class="cal-title">${y}</div>
+      <button data-navyear="1">›</button>
+    </div>
+    <div class="year-grid">${months}</div>`;
+}
+
+/* ================= TO DO ================= */
+
+function renderTodo(){
+  const today=dateKey(new Date());
+  const overdue=overdueTodos();
+  const todayItems=todosForDate(today).filter(t=>!t.done);
+  const upcoming=db.todos.filter(t=>!t.done && t.recurrence==="none" && t.dueDate>today).sort((a,b)=>a.dueDate.localeCompare(b.dueDate));
+  const completed=db.todos.filter(t=>t.done).sort((a,b)=>(b.doneDate||"").localeCompare(a.doneDate||""));
+
+  const group=(title,items)=> items.length? `<div class="section-label">${title}</div><div class="card">${items.map(todoRow).join("")}</div>` : "";
+
+  return group("OVERDUE", overdue) + group("TODAY", todayItems) + group("UPCOMING", upcoming) + group("COMPLETED", completed.slice(0,20))
+    + (!overdue.length&&!todayItems.length&&!upcoming.length&&!completed.length? '<div class="empty">No tasks yet — tap + to add one. It\'ll show up on your Calendar automatically.</div>':"");
+}
+
+function todoRow(t){
+  return `<div class="mission-item">
+    <div class="check ${t.done?"done":""}" data-todoid="${t.id}"></div>
+    <div class="mission-text"><div class="m-title">${t.title}</div><div class="m-sub">${t.dueDate}${t.recurrence!=="none"?" · "+t.recurrence:""}</div></div>
+    <button class="btn danger" data-deltodo="${t.id}" style="padding:5px 9px;font-size:10px;">✕</button>
+  </div>`;
+}
+
+/* ================= CHECK IN ================= */
+
+function renderCheckin(){
+  const pred=predictedCompletionDate();
+  return `
+    <div class="card glow" style="display:flex;align-items:center;gap:16px;">
+      ${ringSVG(completionPct(),100,"#4AC7FF","#8B7CFF","ov2","OVERALL")}
+      <div>
+        <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:15px;">${doneTodosCount()}/${totalTodosCount()} tasks</div>
+        ${pred?`<div style="font-size:11px;color:var(--dim);margin-top:4px;">Predicted pace-finish: ${pred.toDateString()}</div>`:""}
+        <div style="margin-top:6px;"><span class="badge ${paceStatus()}">${paceStatus()}</span></div>
+      </div>
+    </div>
+
+    <div class="section-label">STREAK &amp; ACTIVITY</div>
+    <div class="stat-row">
+      <div class="stat-card"><div class="stat-num">🔥 ${db.streak.count}</div><div class="stat-label">CURRENT STREAK</div></div>
+      <div class="stat-card"><div class="stat-num">${weekTodosDoneCount()}</div><div class="stat-label">DONE THIS WEEK</div></div>
+    </div>
+
+    <div class="section-label">FOCUS SESSIONS</div>
+    <div class="stat-row">
+      <div class="stat-card"><div class="stat-num">${sessionsTodayCount()}</div><div class="stat-label">TODAY</div></div>
+      <div class="stat-card"><div class="stat-num">${db.pomodoro.sessionLog.length}</div><div class="stat-label">ALL TIME</div></div>
+    </div>
+  `;
+}
+
+/* ================= SETTINGS ================= */
+
+function renderSettings(){
+  return `
+    <div class="card" style="text-align:center;">
+      <div class="splash-mark" style="margin:0 auto 8px;width:52px;height:52px;">
+        <svg viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="30" fill="none" stroke="url(#g2)" stroke-width="7" stroke-dasharray="150 220" stroke-linecap="round" transform="rotate(-40 50 50)"/>
+          <circle cx="50" cy="50" r="18" fill="none" stroke="url(#g2)" stroke-width="7" stroke-dasharray="90 130" stroke-linecap="round" transform="rotate(-40 50 50)"/>
+          <circle cx="50" cy="50" r="5" fill="#F5F6FA"/>
+          <defs><linearGradient id="g2" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#4AC7FF"/><stop offset="1" stop-color="#8B7CFF"/></linearGradient></defs>
+        </svg>
+      </div>
+      <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:17px;">LET ME FOCUS</div>
+      <div style="font-size:11px;color:var(--faint);margin-top:4px;">v1.0 · Created by Stalin Irengbam</div>
+      <div style="font-size:10.5px;color:var(--faint);margin-top:8px;">© 2026 Stalin Irengbam. All rights reserved.</div>
+    </div>
+
+    <div class="section-label">PROFILE</div>
+    <div class="card">
+      <label class="field-label">Name</label><input id="setName" value="${db.profile.name}" />
+      <label class="field-label">Goal / exam name</label><input id="setExam" value="${db.profile.examName}" />
+      <label class="field-label">Target date</label><input id="setExamDate" type="date" value="${db.profile.examDate}" />
+      <label class="field-label">Focus hours/day</label><input id="setHours" type="number" step="0.5" value="${db.profile.hours}" />
+      <label class="field-label">Working days</label>
+      <div class="weekday-grid" id="setDays">${WEEKDAYS.map((w,i)=>`<div class="weekday-chip ${db.profile.days.includes(i)?"active":""}" data-setday="${i}">${w}</div>`).join("")}</div>
+      <button class="btn on block" id="saveProfileBtn">Save Mission</button>
+    </div>
+
+    <div class="section-label">POMODORO SETTINGS</div>
+    <div class="card">
+      <label class="field-label">Focus minutes</label><input id="setFocusMin" type="number" min="1" value="${db.pomodoro.focusMin}" />
+      <label class="field-label">Short break minutes</label><input id="setBreakMin" type="number" min="1" value="${db.pomodoro.breakMin}" />
+      <label class="field-label">Long break minutes</label><input id="setLongBreakMin" type="number" min="1" value="${db.pomodoro.longBreakMin}" />
+      <label class="field-label">Sessions before long break</label><input id="setSessionsBeforeLong" type="number" min="1" value="${db.pomodoro.sessionsBeforeLong}" />
+      <button class="btn on block" id="savePomoBtn">Save Pomodoro Settings</button>
+    </div>
+
+    <div class="section-label">DATA</div>
+    <div class="card">
+      <button class="btn danger block" id="resetBtn">Reset all data</button>
+    </div>
+  `;
+}
+
+/* ================= MODAL: ADD EVENT / TODO ================= */
+
+function openModal(html){ document.getElementById("modalSheet").innerHTML=html; document.getElementById("modalOverlay").classList.add("show"); }
+function closeModal(){ document.getElementById("modalOverlay").classList.remove("show"); }
+
+function openAddModal(){
+  if(ui.tab==="todo"){
+    openModal(`
+      <button class="close-x" id="modalClose">✕</button>
+      <div class="modal-title">Add to-do</div>
+      <label class="field-label">Title</label><input id="tTitle" placeholder="e.g. Finish chapter 4 notes" />
+      <label class="field-label">Due date</label><input id="tDate" type="date" value="${dateKey(new Date())}" />
+      <label class="field-label">Recurrence</label>
+      <select id="tRecur"><option value="none">None</option><option value="weekly">Weekly</option><option value="yearly">Yearly</option></select>
+      <button class="btn on block" id="tSave" style="margin-top:6px;">Save to-do</button>
+    `);
+    document.getElementById("modalClose").onclick=closeModal;
+    document.getElementById("tSave").onclick=()=>{
+      const title=document.getElementById("tTitle").value.trim(); if(!title) return;
+      db.todos.push({id:uid(), title, dueDate:document.getElementById("tDate").value, recurrence:document.getElementById("tRecur").value, done:false});
+      save(); closeModal(); renderContent();
+    };
+  } else {
+    openModal(`
+      <button class="close-x" id="modalClose">✕</button>
+      <div class="modal-title">Add event</div>
+      <label class="field-label">Title</label><input id="evTitle" placeholder="e.g. Mock test, birthday" />
+      <label class="field-label">Type</label>
+      <select id="evType"><option value="exam">Exam</option><option value="custom" selected>Reminder</option></select>
+      <label class="field-label">Date</label><input id="evDate" type="date" value="${ui.calSelected}" />
+      <label class="field-label">Recurrence</label>
+      <select id="evRecur"><option value="none">None</option><option value="weekly">Weekly</option><option value="yearly">Yearly (e.g. birthday)</option></select>
+      <button class="btn on block" id="evSave" style="margin-top:6px;">Save event</button>
+    `);
+    document.getElementById("modalClose").onclick=closeModal;
+    document.getElementById("evSave").onclick=()=>{
+      const title=document.getElementById("evTitle").value.trim(); if(!title) return;
+      db.events.push({id:uid(), title, type:document.getElementById("evType").value, date:document.getElementById("evDate").value, recurrence:document.getElementById("evRecur").value});
+      save(); closeModal(); renderContent();
+    };
+  }
+}
+
+/* ================= EVENT BINDING ================= */
+
+function bindContentEvents(){
+  document.querySelectorAll("[data-todoid]").forEach(el=>el.onclick=()=>toggleTodo(el.dataset.todoid));
+  document.querySelectorAll("[data-deltodo]").forEach(el=>el.onclick=(e)=>{ e.stopPropagation(); db.todos=db.todos.filter(t=>t.id!==el.dataset.deltodo); save(); renderContent(); });
+
+  document.querySelectorAll("[data-calview]").forEach(c=>c.onclick=()=>{ ui.calView=c.dataset.calview; renderContent(); });
+  document.querySelectorAll("[data-navmonth]").forEach(b=>b.onclick=()=>{ ui.calDate=new Date(ui.calDate.getFullYear(),ui.calDate.getMonth()+ (+b.dataset.navmonth),1); renderContent(); });
+  document.querySelectorAll("[data-navday]").forEach(b=>b.onclick=()=>{ ui.calSelected=dateKey(addDays(keyToDate(ui.calSelected), +b.dataset.navday)); renderContent(); });
+  document.querySelectorAll("[data-navweek]").forEach(b=>b.onclick=()=>{ ui.calSelected=dateKey(addDays(keyToDate(ui.calSelected), 7*(+b.dataset.navweek))); renderContent(); });
+  document.querySelectorAll("[data-navyear]").forEach(b=>b.onclick=()=>{ ui.calDate=new Date(ui.calDate.getFullYear()+(+b.dataset.navyear), ui.calDate.getMonth(),1); renderContent(); });
+  document.querySelectorAll("[data-day]").forEach(c=>c.onclick=()=>{ ui.calSelected=c.dataset.day; renderContent(); });
+  document.querySelectorAll("[data-yearmonth]").forEach(c=>c.onclick=()=>{ ui.calDate=new Date(ui.calDate.getFullYear(), +c.dataset.yearmonth,1); ui.calView="month"; renderContent(); });
+
+  const checkinCard=document.getElementById("checkinCard"); if(checkinCard) checkinCard.onclick=()=>{ ui.tab="checkin"; renderApp(); };
+
+  const pomoStart=document.getElementById("pomoStart"); if(pomoStart) pomoStart.onclick=()=>{ db.pomodoro.state? resumePomodoro() : startPomodoro("focus"); renderContent(); };
+  const pomoPause=document.getElementById("pomoPause"); if(pomoPause) pomoPause.onclick=()=>{ pausePomodoro(); renderContent(); };
+  const pomoSkip=document.getElementById("pomoSkip"); if(pomoSkip) pomoSkip.onclick=()=>{ if(db.pomodoro.state){ skipPomodoro(); renderContent(); } };
+  const pomoReset=document.getElementById("pomoReset"); if(pomoReset) pomoReset.onclick=()=>{ resetPomodoro(); renderContent(); };
+
+  const saveProfileBtn=document.getElementById("saveProfileBtn"); if(saveProfileBtn){
+    document.querySelectorAll("[data-setday]").forEach(c=>c.onclick=()=>c.classList.toggle("active"));
+    saveProfileBtn.onclick=()=>{
+      db.profile.name=document.getElementById("setName").value.trim()||db.profile.name;
+      db.profile.examName=document.getElementById("setExam").value.trim()||db.profile.examName;
+      db.profile.examDate=document.getElementById("setExamDate").value||db.profile.examDate;
+      db.profile.hours=parseFloat(document.getElementById("setHours").value)||db.profile.hours;
+      db.profile.days=[...document.querySelectorAll("[data-setday].active")].map(c=>+c.dataset.setday);
+      save(); renderApp(); alert("Mission saved.");
+    };
+  }
+  const savePomoBtn=document.getElementById("savePomoBtn"); if(savePomoBtn) savePomoBtn.onclick=()=>{
+    db.pomodoro.focusMin=parseFloat(document.getElementById("setFocusMin").value)||db.pomodoro.focusMin;
+    db.pomodoro.breakMin=parseFloat(document.getElementById("setBreakMin").value)||db.pomodoro.breakMin;
+    db.pomodoro.longBreakMin=parseFloat(document.getElementById("setLongBreakMin").value)||db.pomodoro.longBreakMin;
+    db.pomodoro.sessionsBeforeLong=parseInt(document.getElementById("setSessionsBeforeLong").value)||db.pomodoro.sessionsBeforeLong;
+    save(); alert("Pomodoro settings saved.");
+  };
+  const resetBtn=document.getElementById("resetBtn"); if(resetBtn) resetBtn.onclick=()=>{
+    if(confirm("This clears your profile, tasks, events and pomodoro history permanently. Continue?")){ localStorage.clear(); location.reload(); }
+  };
+}
+
+/* ================= FAB / MODAL ================= */
+document.getElementById("fab").onclick=()=>openAddModal();
+document.getElementById("modalOverlay").onclick=(e)=>{ if(e.target.id==="modalOverlay") closeModal(); };
+
+/* ================= GLOBAL TICK ================= */
+setInterval(()=>{ if(document.getElementById("wrap").classList.contains("show")) pomodoroTick(); }, 500);
+
+/* ================= INIT ================= */
+initSplash();
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("service-worker.js").catch(() => {}));
+}
+</script>
+</body>
+</html>
